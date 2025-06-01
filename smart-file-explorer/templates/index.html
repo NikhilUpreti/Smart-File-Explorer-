@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart File Explorer</title>
+  <script src="/static/scripts.js" defer></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    .dark body {
+      background-color: #121212;
+      color: #eee;
+    }
+    header {
+      background-color: #00c6ff;
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    input[type="text"], select {
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+      margin-right: 5px;
+    }
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      background-color: #0072ff;
+      color: white;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+    button:hover {
+      background-color: #0072ff;
+    }
+    .container {
+      display: flex;
+    }
+    aside {
+      width: 200px;
+      padding: 20px;
+      background-color: #eee;
+    }
+    .dark aside {
+      background-color: #1f1f1f;
+    }
+    aside ul {
+      list-style: none;
+      padding: 0;
+    }
+    aside li {
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    main {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .file-card {
+      background-color: white;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      width: 250px;
+    }
+    .dark .file-card {
+      background-color: #2c2c2c;
+    }
+    footer {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      bottom: 0;
+      background-color: #ddd;
+    }
+    .dark footer {
+      background-color: #1a1a1a;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📁 Smart File Explorer</h1>
+    <div>
+      <input type="text" id="searchInput" placeholder="Search..." />
+      <select id="searchFilter">
+        <option value="name">Name</option>
+        <option value="type">Type</option>
+        <option value="date">Date</option>
+        <option value="size">Size</option>
+      </select>
+      <button id="searchBtn">Search</button>
+
+      <form id="uploadForm" enctype="multipart/form-data" style="display:inline;">
+        <input type="file" name="file" required />
+        <button type="submit">Upload</button>
+      </form>
+      <button onclick="document.documentElement.classList.toggle('dark')">Toggle Theme</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <aside>
+      <h2>Categories</h2>
+      <ul>
+        <li onclick="loadFiles()">📁 All</li>
+        <li onclick="loadFiles('Documents')">📄 Documents</li>
+        <li onclick="loadFiles('Images')">🖼️ Images</li>
+        <li onclick="loadFiles('Videos')">🎞️ Videos</li>
+      </ul>
+    </aside>
+
+    <main id="fileList">
+    </main>
+  </div>
+
+  <footer>
+    © 2025 Smart File Explorer · Built by Team FOUR LOOPS
+  </footer>
+</body>
+</html>
