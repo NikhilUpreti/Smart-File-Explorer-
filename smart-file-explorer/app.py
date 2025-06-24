@@ -3,6 +3,9 @@ import os
 import shutil
 import re
 from datetime import datetime
+from flask import send_file
+
+favorites = set()
 
 app = Flask(__name__)
 BASE_DIR = os.path.join(os.getcwd(), "explorer_files")
@@ -33,12 +36,14 @@ def list_files():
             if category and file_category != category:
                 continue
             files.append({
-                'name': entry.name,
-                'is_dir': entry.is_dir(),
-                'size': entry.stat().st_size,
-                'modified': datetime.fromtimestamp(entry.stat().st_mtime).isoformat(),
-                'category': file_category
-            })
+            'name': entry.name,
+            'is_dir': entry.is_dir(),
+            'size': entry.stat().st_size,
+            'modified': datetime.fromtimestamp(entry.stat().st_mtime).isoformat(),
+            'category': file_category,
+            'is_favorite': os.path.join(BASE_DIR, entry.name) in favorites  # ✅ comma added
+             })
+
         return jsonify({'files': files, 'path': BASE_DIR})
     except Exception as e:
         return jsonify({'error': str(e)})
@@ -127,6 +132,56 @@ def file_operation():
         return jsonify({'status': 'success'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/favorites', methods=['GET', 'POST'])
+def handle_favorites():
+    global favorites
+
+    if request.method == 'POST':
+        path = request.json.get('path')
+        if path in favorites:
+            favorites.remove(path)
+            return jsonify({'status': 'success', 'is_favorite': False})
+        else:
+            favorites.add(path)
+            return jsonify({'status': 'success', 'is_favorite': True})
+
+    result = []
+    for fav in list(favorites):
+        if os.path.exists(fav):
+            stat = os.stat(fav)
+            result.append({
+                'name': os.path.basename(fav),
+                'path': os.path.dirname(fav),
+                'size': stat.st_size,
+                'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                'is_dir': False,
+                'is_favorite': True
+            })
+    return jsonify(result)
+
+@app.route('/preview', methods=['POST'])
+def preview():
+    data = request.get_json()
+    path = data.get('path')
+
+    if not path or not os.path.exists(path) or not os.path.isfile(path):
+        return jsonify({'status': 'error', 'error': 'Invalid file path'})
+
+    try:
+        return jsonify({
+            'status': 'success',
+            'url': f"/preview_file?path={path}"
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)})
+
+@app.route('/preview_file')
+def preview_file():
+    path = request.args.get('path')
+    if not path or not os.path.exists(path):
+        return "File not found", 404
+    return send_file(path)
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
