@@ -46,14 +46,83 @@ function displayFiles(data) {
     const card = document.createElement('div');
     card.className = 'file-card';
     card.innerHTML = `
+      <button class="favorite-star ${file.is_favorite ? 'active' : ''}" 
+        onclick="toggleFavorite('${fullPath.replace(/\\/g, '\\\\')}', this)">
+      ${file.is_favorite ? '⭐' : '☆'}
+      </button>
+      <input type="checkbox" class="fav-checkbox" data-path="${fullPath.replace(/\\/g, '\\\\')}" style="margin-bottom: 5px;" />
       <p><strong>${file.is_dir ? '📁' : '📄'} ${file.name}</strong></p>
+
       <p>${(file.size / 1024).toFixed(1)} KB · Modified: ${new Date(file.modified).toLocaleDateString()}</p>
       <div style="margin-top: 10px;">
+        <button onclick="previewFile('${fullPath.replace(/\\/g, '\\\\')}')">Preview</button>
         <button onclick="renameFile('${fullPath.replace(/\\/g, '\\\\')}')">Rename</button>
         <button onclick="deleteFile('${fullPath.replace(/\\/g, '\\\\')}')">Delete</button>
+        
       </div>
     `;
     container.appendChild(card);
+  });
+}
+
+function loadFavorites() {
+  fetch('/favorites')
+    .then(res => res.json())
+    .then(data => {
+      displayFiles({ files: data, path: "" });
+    });
+}
+
+function toggleFavorite(path, button) {
+  fetch('/favorites', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path })
+  }).then(res => res.json())
+    .then(res => {
+      if (res.status === 'success') {
+        button.classList.toggle('active', res.is_favorite);
+        button.textContent = res.is_favorite ? '⭐' : '☆';
+      }
+    });
+}
+function markSelectedFavorites() {
+  const checkboxes = document.querySelectorAll('.fav-checkbox:checked');
+  if (checkboxes.length === 0) {
+    alert("Please select at least one file.");
+    return;
+  }
+  checkboxes.forEach(box => {
+    const path = box.dataset.path;
+    fetch('/favorites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path })
+    }).then(res => res.json())
+      .then(res => {
+        if (res.status === 'success') {
+          box.checked = false; // uncheck after action
+        }
+      });
+  });
+
+  alert("Selected files marked as favorite.");
+  loadFiles(currentCategory === 'all' ? '' : currentCategory);
+}
+
+function previewFile(path) {
+  fetch('/preview', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path })
+  })
+  .then(res => res.json())
+  .then(res => {
+    if (res.status === 'success') {
+      window.open(res.url, '_blank');
+    } else {
+      alert("Preview failed: " + res.error);
+    }
   });
 }
 
